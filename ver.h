@@ -3,7 +3,7 @@
  ------------------------------------------------------------------------
 
         Filename   : ver.h
-        Version    : 0.03
+        Version    : 0.04
         Author(s)  : Natalia Portillo
             
         Component : OWP DOS subsystem - VER command
@@ -35,6 +35,10 @@
               DOS version information.
               All detect stuff moved to int21h.c.
               All defines moved to ver.h
+        0.04: Implemented detection of DESQview, 4DOS and NDOS.
+              Implemented detection of the Windows version.
+              Implemented detection of OS/2.
+              Implemented detection of Windows Millenium (tested with beta 3).
 
  --[ How to compile ]----------------------------------------------------
 
@@ -43,7 +47,7 @@
 
  --[ Where to get help/information ]-------------------------------------
 
-	This archaic and abandoned software is opensource with no warranty
+    This archaic and abandoned software is opensource with no warranty
     or help of any kind.
     For inquiries contact claunia@claunia.com.
 
@@ -76,7 +80,7 @@
 #define SYSTEM "OWP"
 #define PROGRAM "VER"
 #define MAJOR_VERSION 0
-#define MINOR_VERSION_STRING "03"
+#define MINOR_VERSION_STRING "04"
 #define SUB_VERSION_STRING ""
 #define COPYRIGHT "2000 Open Windows Project"
 
@@ -88,11 +92,12 @@
 #define FreeDOS 4
 #define Win95   5
 #define WinNT   6
-#define OS2     7 /* Not tested yet, so not implemented yet */
+#define OS2     7
 #define PTS_DOS 8
 #define RxDOS   9
 #define ConDOS  10 /* Concurrent DOS, not tested yet */
-#define NVDOS   11 /* Novell version of DR_DOS, not tested yet */
+#define NVDOS   11 /* Novell version of DR-DOS, tested in Caldera OpenDOS 7.01 */
 #define OLD     12
-#define Win98   13
+#define Win98   13 /* Or Windows 95 OSR 2 or upper */
+#define WinMe   14
 #define ERROR   255

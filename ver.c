@@ -3,7 +3,7 @@
  ------------------------------------------------------------------------
 
         Filename   : ver.c
-        Version    : 0.03
+        Version    : 0.04
         Author(s)  : Natalia Portillo
             
         Component : OWP DOS subsystem - VER command
@@ -35,6 +35,10 @@
               DOS version information.
               All detect stuff moved to int21h.c.
               All defines moved to ver.h
+        0.04: Implemented detection of DESQview, 4DOS and NDOS.
+              Implemented detection of the Windows version.
+              Implemented detection of OS/2.
+              Implemented detection of Windows Millenium (tested with beta 3).
 
  --[ How to compile ]----------------------------------------------------
 
@@ -43,7 +47,7 @@
 
  --[ Where to get help/information ]-------------------------------------
 
-	This archaic and abandoned software is opensource with no warranty
+    This archaic and abandoned software is opensource with no warranty
     or help of any kind.
     For inquiries contact claunia@claunia.com.
 
@@ -70,24 +74,25 @@
 #include <stdio.h>
 #include "ver.h" /* Include definitions */
 
-main()
+int main()
 {
    /* Declare variables */
-   int dos_major,dos_minor,dostype,dos_sim_major,dos_sim_minor,dos_oem;
+   int dos_major,dos_minor,dostype,dos_sim_major,dos_sim_minor,dos_oem,desq_ma,desq_mi,_4dos_ma,_4dos_mi,ndos_ma,ndos_mi,win_ma,win_mi,win_mode;
 
    /* Put copyright info */
    printf("%s %s %d.%s%s",SYSTEM,PROGRAM,MAJOR_VERSION,MINOR_VERSION_STRING,SUB_VERSION_STRING);
    printf("\nCopyright (c) %s\n\n",COPYRIGHT);
 
    /* Get DOS version stuff */
-   getdosver(&dostype, &dos_major, &dos_minor, &dos_sim_major, &dos_sim_minor, &dos_oem);
+   getdosver(&dostype, &dos_major, &dos_minor, &dos_sim_major, &dos_sim_minor, &dos_oem, &desq_ma, &desq_mi, &_4dos_ma, &_4dos_mi, &ndos_ma, &ndos_mi, &win_ma, &win_mi, &win_mode);
 
    /* Put version info */
    if(dostype == 0)
         {
         printf("\nUnknown DOS version %d.%d, that is simulating DOS %d.%d",dos_major,dos_minor,dos_sim_major,dos_sim_minor);
         printf("\nDOS OEM code %x",dos_oem);
-        printf("\nPlease send this info and the O.S. name and version to\niosglpgc@teleline.es");
+	printf("\nPlease send this info and the O.S. name and version to\niosglpgc@teleline.es");
+	return(1);
         }
    if(dostype == 1)
         {
@@ -134,6 +139,31 @@ main()
              printf("simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
              }
         }
+   if(dostype == 7)
+        {
+        printf("\nOS/2 ");
+        if(dos_major == 10)
+             {
+             printf("1.0\n");
+             }
+        else if(dos_major == 20 && dos_minor < 30)
+                  {
+                  printf("2.0\n");
+                  }
+             else if(dos_major == 20 && dos_minor == 30)
+                  {
+                  printf("Warp 3\n");
+                  }
+                  else if(dos_major == 20 && dos_minor == 40)
+                       {
+                       printf("Warp 4\n");
+                       }
+                       else{printf("unknown version\n");}
+        if(dos_major != dos_sim_major || dos_minor != dos_sim_minor)
+             {
+             printf("simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
+             }
+        }
    if(dostype == 8)
         {
 	printf("\nPTS-DOS, unknown version\n");
@@ -169,10 +199,68 @@ main()
         }
    if(dostype == 13)
         {
-        printf("\nWindows 95 OSR 2 or upper\n");
+        if(win_mi < 10)
+            {
+            printf("\nWindows 95 OSR 2 or OSR 3\n");
+            }
+        else if(win_mi >= 10)
+                 {
+                 printf("\nWindows 98 or 98 S.E.\n");
+                 }
+             else
+                 {
+                 printf("\nWindows 95 OSR 2 or upper\n");
+                 }
         if(dos_major!=dos_sim_major || dos_minor!=dos_sim_minor)
              {
              printf("simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
              }
         }
+   if(dostype == 14)
+        {
+        printf("\nWindows Millenium\n",dos_major,dos_minor);
+        if(dos_major != dos_sim_major || dos_minor != dos_sim_minor)
+             {
+             printf("simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
+             }
+        }
+   if(desq_ma >= 2)
+        {
+        printf("Running under DESQview %d.%d\n",desq_ma,desq_mi);
+        }
+   if(_4dos_ma >= 2)
+        {
+        if(_4dos_mi < 10)
+            printf("Running under 4DOS %d.0%d\n",_4dos_ma,_4dos_mi);
+        else
+            printf("Running under 4DOS %d.%d\n",_4dos_ma,_4dos_mi);
+        }
+   if(ndos_ma > 0)
+        {
+        printf("Running under NDOS %d.%d\n",ndos_ma,ndos_mi);
+        }
+   if(win_ma == 3 && win_mi < 10 && win_mode == 3)
+        {
+        printf("Running under Windows %d.%d in enhanced mode\n",win_ma,win_mi);
+        }
+   if(win_ma == 3 && win_mi >= 10)
+        {
+        if(win_mode == 2)
+            {
+            printf("Running under Windows %d.%d in standard mode\n",win_ma,win_mi);
+            }
+        else if(win_mode == 3)
+                 {
+                 printf("Running under Windows %d.%d in enhanced mode\n",win_ma,win_mi);
+                 }
+                 else
+                     {
+                     printf("Running under Windows %d.%d\n",win_ma,win_mi);
+                     }
+        }
+   if(win_ma == 2 && win_mode == 3)
+        {
+        printf("Running under Windows/386 %d.%d\n",win_ma,win_mi);
+        }
+return(0);
 }

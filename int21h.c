@@ -3,7 +3,7 @@
  ------------------------------------------------------------------------
 
         Filename   : int21h.c
-        Version    : 0.03
+        Version    : 0.04
         Author(s)  : Natalia Portillo
             
         Component : OWP DOS subsystem - VER command
@@ -35,6 +35,10 @@
               DOS version information.
               All detect stuff moved to int21h.c.
               All defines moved to ver.h
+        0.04: Implemented detection of DESQview, 4DOS and NDOS.
+              Implemented detection of the Windows version.
+              Implemented detection of OS/2.
+              Implemented detection of Windows Millenium (tested with beta 3).
 
  --[ How to compile ]----------------------------------------------------
 
@@ -43,7 +47,7 @@
 
  --[ Where to get help/information ]-------------------------------------
 
-	This archaic and abandoned software is opensource with no warranty
+    This archaic and abandoned software is opensource with no warranty
     or help of any kind.
     For inquiries contact claunia@claunia.com.
 
@@ -69,7 +73,7 @@
 
 #include <dos.h>
 
-void getdosver (int *DOS_FLAVOR, int *major, int *minor, int *sim_major, int *sim_minor, int *dos_oem)
+void getdosver (int *DOS_FLAVOR, int *major, int *minor, int *sim_major, int *sim_minor, int *dos_oem, int *desq_ma, int *desq_mi, int *_4dos_ma, int *_4dos_mi, int *ndos_ma, int *ndos_mi, int *win_ma, int *win_mi, int *win_mode)
 {
    union REGS regs;
    int dos_temp, nt_flag;
@@ -120,6 +124,10 @@ void getdosver (int *DOS_FLAVOR, int *major, int *minor, int *sim_major, int *si
         {
         *DOS_FLAVOR=2;
         }
+   if(dos_temp == 0 && *major >= 10)
+        {
+        *DOS_FLAVOR=7;
+        }
    if(dos_temp == 0xff && *major <= 6)
         {
         *DOS_FLAVOR=1;
@@ -134,6 +142,10 @@ void getdosver (int *DOS_FLAVOR, int *major, int *minor, int *sim_major, int *si
              {
              *DOS_FLAVOR=13;
              }
+        }
+   if(dos_temp == 0xff && *major == 8)
+        {
+        *DOS_FLAVOR=14;
         }
    if(dos_temp == 253)
         {
@@ -258,4 +270,66 @@ void getdosver (int *DOS_FLAVOR, int *major, int *minor, int *sim_major, int *si
         }
 /* End of check for DR-DOS_FLAVOR versions */
 *dos_oem=dos_temp;
+*desq_ma=0;
+*desq_mi=0;
+   regs.h.ah = 0x2b; /* Set function */
+   regs.x.cx = 0x4445; /* Set function */
+   regs.x.dx = 0x5351; /* Set function */
+   regs.h.al = 0x01; /* Set function */
+   int86 (0x21,&regs,&regs); /* Call INT 21h */
+   if(regs.h.al!=0xFF)
+        {
+        *desq_ma=regs.h.bh;
+        *desq_mi=regs.h.bl;
+        }
+*_4dos_ma=0;
+*_4dos_mi=0;
+   regs.h.bh = 0x00; /* Set function */
+   regs.x.ax = 0xD44D; /* Set 4DOS API */
+   int86 (0x2F,&regs,&regs); /* Call INT 2Fh */
+   if(regs.x.ax==0x44DD)
+        {
+        *_4dos_ma=regs.h.bl;
+        *_4dos_mi=regs.h.bh;
+        }
+*ndos_ma=0;
+*ndos_mi=0;
+   regs.h.bh = 0x00; /* Set function */
+   regs.x.ax = 0xE44D; /* Set 4DOS API (Well, NDOS is the Norton version of 4DOS */
+   int86 (0x2F,&regs,&regs); /* Call INT 2Fh */
+   if(regs.x.ax==0x44EE)
+        {
+        *ndos_ma=regs.h.bl;
+        *ndos_mi=regs.h.bh;
+        }
+*win_ma=0;
+*win_mi=0;
+*win_mode=0;
+   regs.x.ax = 0x160A; /* Set function (Windows 3.1 or upper) */
+   int86 (0x2F,&regs,&regs); /* Call INT 2Fh */
+   if(regs.x.ax==0x0000)
+        {
+        *win_ma=regs.h.bh;
+        *win_mi=regs.h.bl;
+        *win_mode=regs.x.cx;
+        }
+   else
+       {
+       regs.x.ax = 0x1600; /* Set function (Windows/386 or upper in enhanced mode)*/
+       int86 (0x2F,&regs,&regs); /* Call INT 2Fh */
+       if(regs.h.al==0x01 || regs.h.al==0xFF)
+	   {
+	   *win_ma=2;
+	   *win_mi=regs.h.ah;
+	   *win_mode=3;
+	   }
+       else if(regs.h.al >= 3)
+           {
+           *win_ma=regs.h.al;
+           *win_mi=regs.h.ah;
+           *win_mode=3;
+           }
+	   else
+	       *win_ma=*win_mi=0;
+       }
 }
