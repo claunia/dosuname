@@ -1,12 +1,12 @@
 /************************************************************************
-  T h e   O p e n   W i n d o w s   P r o j e c t
+  Claunia.com
  ------------------------------------------------------------------------
 
         Filename   : ver.h
-        Version    : 0.04
+        Version    : 0.06
         Author(s)  : Natalia Portillo
             
-        Component : OWP DOS subsystem - VER command
+        Component : UNAME for DOS
 
  --[ Description ]-------------------------------------------------------
   
@@ -39,6 +39,13 @@
               Implemented detection of the Windows version.
               Implemented detection of OS/2.
               Implemented detection of Windows Millenium (tested with beta 3).
+        0.05: Corrected an error with minor versions of OS/2 2.x and 1.x
+              Implemented SoftICE debugger detection. But not tested.
+              Translated to spanish and french.
+              Corrected an error with DOS versions prior to 5.x when testing
+              the true DOS version
+        0.06: Implemented detection of Windows XP.
+              Corrected an error with OS/2 2.x versions.
 
  --[ How to compile ]----------------------------------------------------
 
@@ -47,7 +54,7 @@
 
  --[ Where to get help/information ]-------------------------------------
 
-    This archaic and abandoned software is opensource with no warranty
+	This archaic and abandoned software is opensource with no warranty
     or help of any kind.
     For inquiries contact claunia@claunia.com.
 
@@ -68,7 +75,7 @@
         Foundation,Inc.,59 Temple Place - Suite 330,Boston,MA  02111-1307,USA.
 
  ------------------------------------------------------------------------
- Copyright (c) 2000 The Open Windows Project
+ Copyright (c) 2001 Claunia.com
 *************************************************************************/
 
 /* OWP DOS Subsystem general definition */
@@ -77,12 +84,12 @@
 #endif
 
 /* Program general definitions */
-#define SYSTEM "OWP"
-#define PROGRAM "VER"
+#define SYSTEM "DOS"
+#define PROGRAM "UNAME"
 #define MAJOR_VERSION 0
-#define MINOR_VERSION_STRING "04"
+#define MINOR_VERSION_STRING "07"
 #define SUB_VERSION_STRING ""
-#define COPYRIGHT "2000 Open Windows Project"
+#define COPYRIGHT "2002 Claunia.com"
 
 /* DOS types definition */
 #define UNKNOWN 0
@@ -91,7 +98,7 @@
 #define DR_DOS  3
 #define FreeDOS 4
 #define Win95   5
-#define WinNT   6
+#define WinNT   6  /* Any NTVDM, from Windows NT 3, 4 or Windows 2k or XP */
 #define OS2     7
 #define PTS_DOS 8
 #define RxDOS   9
@@ -100,4 +107,5 @@
 #define OLD     12
 #define Win98   13 /* Or Windows 95 OSR 2 or upper */
 #define WinMe   14
+#define S_DOS   15 /* S/DOS (Source DOS), not tested yet, so not implemented */
 #define ERROR   255

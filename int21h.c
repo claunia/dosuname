@@ -1,12 +1,12 @@
 /************************************************************************
-  T h e   O p e n   W i n d o w s   P r o j e c t
+  Claunia.com
  ------------------------------------------------------------------------
 
         Filename   : int21h.c
-        Version    : 0.04
+        Version    : 0.07
         Author(s)  : Natalia Portillo
             
-        Component : OWP DOS subsystem - VER command
+        Component : UNAME for DOS
 
  --[ Description ]-------------------------------------------------------
   
@@ -39,6 +39,16 @@
               Implemented detection of the Windows version.
               Implemented detection of OS/2.
               Implemented detection of Windows Millenium (tested with beta 3).
+        0.05: Corrected an error with minor versions of OS/2 2.x and 1.x
+              Implemented SoftICE debugger detection. But not tested.
+              Translated to spanish and french.
+              Corrected an error with DOS versions prior to 5.x when testing
+              the true DOS version
+        0.06: Implemented detection of Windows XP.
+              Corrected an error with OS/2 2.x versions.
+        0.07: Implemented a workaround so OS/2 3.x and upper versions can be
+              easily detected, without exact knowledge of the versions by
+              this program.
 
  --[ How to compile ]----------------------------------------------------
 
@@ -47,7 +57,7 @@
 
  --[ Where to get help/information ]-------------------------------------
 
-    This archaic and abandoned software is opensource with no warranty
+	This archaic and abandoned software is opensource with no warranty
     or help of any kind.
     For inquiries contact claunia@claunia.com.
 
@@ -68,12 +78,12 @@
         Foundation,Inc.,59 Temple Place - Suite 330,Boston,MA  02111-1307,USA.
 
  ------------------------------------------------------------------------
- Copyright (c) 2000 The Open Windows Project
+ Copyright (c) 2001 Claunia.com
 *************************************************************************/
 
 #include <dos.h>
 
-void getdosver (int *DOS_FLAVOR, int *major, int *minor, int *sim_major, int *sim_minor, int *dos_oem, int *desq_ma, int *desq_mi, int *_4dos_ma, int *_4dos_mi, int *ndos_ma, int *ndos_mi, int *win_ma, int *win_mi, int *win_mode)
+void getdosver (int *DOS_FLAVOR, int *major, int *minor, int *sim_major, int *sim_minor, int *dos_oem, int *desq_ma, int *desq_mi, int *_4dos_ma, int *_4dos_mi, int *ndos_ma, int *ndos_mi, int *win_ma, int *win_mi, int *win_mode, int *softice_ma, int *softice_mi)
 {
    union REGS regs;
    int dos_temp, nt_flag;
@@ -111,8 +121,8 @@ void getdosver (int *DOS_FLAVOR, int *major, int *minor, int *sim_major, int *si
         dos_temp = regs.h.bh; /* Set DOS type */
         *major = regs.h.al; /* Set the simulated major version */
         *minor = regs.h.ah; /* Set the simulated minor version */
-        *sim_major = 0;
-        *sim_minor = 0;
+        *sim_major = *major;
+        *sim_minor = *minor;
         }
 
 /* Set DOS to DOS type */
@@ -332,4 +342,18 @@ void getdosver (int *DOS_FLAVOR, int *major, int *minor, int *sim_major, int *si
 	   else
 	       *win_ma=*win_mi=0;
        }
+regs.x.ax = 0x0000; /* SoftICE detection function */
+regs.x.si = 0x4647; /* SoftICE detection function */
+regs.x.di = 0x4A4D; /* SoftICE detection function */
+int86(0x03,&regs,&regs); /* Call INT 03h */
+if(regs.x.si != 0x4647)
+    {
+    *softice_ma=1; // SoftICE version detection not yet implemented
+    *softice_mi=1; // SoftICE version detection not yet implemented
+    }
+else
+    {
+    *softice_ma=0; // SoftICE not detected
+    *softice_mi=0; // SoftICE not detected
+    }
 }
