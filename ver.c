@@ -3,10 +3,10 @@
  ------------------------------------------------------------------------
 
         Filename   : ver.c
-        Version    : 0.01
+        Version    : 0.03
         Author(s)  : Natalia Portillo
             
-        Component : OWP DOS subsystem
+        Component : OWP DOS subsystem - VER command
 
  --[ Description ]-------------------------------------------------------
   
@@ -30,7 +30,11 @@
               DOS             DOS Version     DOS OEM Code
               PTS-DOS 2000    6.22            0x66
               RxDOS 7.1.5     7.0             0x5E
-
+        0.03: Almost remade from zero.
+              Now uses four functions of INT-21h to get almost all
+              DOS version information.
+              All detect stuff moved to int21h.c.
+              All defines moved to ver.h
 
  --[ How to compile ]----------------------------------------------------
 
@@ -63,94 +67,112 @@
  Copyright (c) 2000 The Open Windows Project
 *************************************************************************/
 
-#ifndef OWP_DOS_SUBSYSTEM
-#define OWP_DOS_SUBSYSTEM
-#endif
-
-#define SYSTEM "OWP"
-#define PROGRAM "VER"
-#define MAJOR_VERSION 0
-#define MINOR_VERSION_STRING "02"
-#define SUB_VERSION_STRING ""
-#define COPYRIGHT "2000 Open Windows Project"
-
 #include <stdio.h>
-#include <dos.h>
-
-void getdosver (int *major,int *minor,int *oem_code)
-{
-   union REGS regs;
-   regs.x.ax = 0x3000;
-   int86 (0x21,&regs,&regs);
-   *major = regs.h.al;
-   *minor = regs.h.ah;
-   *oem_code = regs.h.bh;
-}
+#include "ver.h" /* Include definitions */
 
 main()
 {
-   int dos_major,dos_minor,dos_oem_code;
+   /* Declare variables */
+   int dos_major,dos_minor,dostype,dos_sim_major,dos_sim_minor,dos_oem;
 
+   /* Put copyright info */
    printf("%s %s %d.%s%s",SYSTEM,PROGRAM,MAJOR_VERSION,MINOR_VERSION_STRING,SUB_VERSION_STRING);
    printf("\nCopyright (c) %s\n\n",COPYRIGHT);
-   getdosver (&dos_major,&dos_minor,&dos_oem_code);
 
-   if(dos_oem_code==0xFD)
-       {
-       printf("FreeDOS simulating DOS %d.%d",dos_major,dos_minor);
-       }
-   else if(dos_oem_code==0x00)
+   /* Get DOS version stuff */
+   getdosver(&dostype, &dos_major, &dos_minor, &dos_sim_major, &dos_sim_minor, &dos_oem);
+
+   /* Put version info */
+   if(dostype == 0)
         {
-        if(dos_major<=3)
-            {
-            printf("MS-DOS / PC-DOS %d.%d",dos_major,dos_minor);
-            }
-        else if(dos_major>=4)
+        printf("\nUnknown DOS version %d.%d, that is simulating DOS %d.%d",dos_major,dos_minor,dos_sim_major,dos_sim_minor);
+        printf("\nDOS OEM code %x",dos_oem);
+        printf("\nPlease send this info and the O.S. name and version to\niosglpgc@teleline.es");
+        }
+   if(dostype == 1)
+        {
+        printf("\nMS-DOS version %d.%d\n",dos_major,dos_minor);
+        if(dos_major != dos_sim_major || dos_minor != dos_sim_minor)
              {
-             printf("DR-DOS simulating DOS %d.%d",dos_major,dos_minor);
+             printf(" simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
              }
         }
-        else if(dos_oem_code==0xFF && dos_major>=4 && dos_major <=6)
+   if(dostype == 2)
+        {
+        printf("\nPC-DOS version %d.%d\n",dos_major,dos_minor);
+        if(dos_major != dos_sim_major || dos_minor != dos_sim_minor)
              {
-             printf("MS-DOS / PC-DOS %d.%d",dos_major,dos_minor);
-             if(dos_major==5)
-                 {
-                 printf("\nNOTE: May be OS/2 / Windows NT simulating DOS 5.0");
-                 }
+             printf("simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
              }
-             else if(dos_oem_code==0xFF && dos_major>=7)
-                  {
-                  if(dos_minor==0)
-                      {
-                      printf("Windows 95 simulating DOS 7.00");
-                      printf("\nNOTE: May be PC-DOS 7.0");
-                      }
-                  else if(dos_minor==10)
-                       {
-                       printf("Windows 95 OSR 2 or upper simulating DOS 7.10");
-                       printf("\nNOTE: May be PC-DOS 7.1");
-                       }
-                       else
-                           {
-                           printf("PC-DOS %d.%d",dos_major,dos_minor);
-                           }
-                  }
-                  else if(dos_oem_code==0xFF && dos_major==3)
-                       {
-                       printf("MS-DOS %d.%d",dos_major,dos_minor);
-                       }
-                       else if(dos_oem_code==0x5E)
-                            {
-                            printf("RxDOS %d.%d",dos_major,dos_minor);
-                            }
-                            else if(dos_oem_code==0x66)
-                                 {
-                                 printf("PTS-DOS simulating DOS %d.%d",dos_major,dos_minor);
-                                 }
-                                 else
-                                     {
-                                     printf("Unknown DOS version %d.%d,OEM code %x",dos_major,dos_minor,dos_oem_code);
-                                     printf("\nPlease send this info and the DOS name and version to iosglpgc@teleline.es");
-                                     }
+        }
+   if(dostype == 3)
+        {
+        printf("\nDR-DOS version %d.%d\n",dos_major,dos_minor);
+        if(dos_major != dos_sim_major || dos_minor != dos_sim_minor)
+             {
+             printf("simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
+             }
+        }
+   if(dostype == 4)
+        {
+        printf("\nFreeDOS version 1.1.%d\n",dos_major);
+        printf(" simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
+        }
+   if(dostype == 5)
+        {
+        printf("\nWindows 95\n",dos_major,dos_minor);
+        if(dos_major != dos_sim_major || dos_minor != dos_sim_minor)
+             {
+             printf("simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
+             }
+        }
+   if(dostype == 6)
+        {
+        printf("\nWindows NT or Windows 2000\n",dos_major,dos_minor);
+        if(dos_major != dos_sim_major || dos_minor != dos_sim_minor)
+             {
+             printf("simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
+             }
+        }
+   if(dostype == 8)
+        {
+	printf("\nPTS-DOS, unknown version\n");
+        printf("simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
+        }
+   if(dostype == 9)
+        {
+        printf("\nRxDOS version %d.%d\n",dos_major,dos_minor);
+        if(dos_major != dos_sim_major || dos_minor != dos_sim_minor)
+             {
+             printf("simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
+             }
+        }
+   if(dostype == 10)
+        {
+        printf("\nConcurrent DOS version %d.%d\n",dos_major,dos_minor);
+        if(dos_major != dos_sim_major || dos_minor != dos_sim_minor)
+             {
+             printf("simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
+             }
+        }
+   if(dostype == 11)
+        {
+        printf("\nNovell DOS version %d.%d\n",dos_major,dos_minor);
+        if(dos_major != dos_sim_major || dos_minor != dos_sim_minor)
+             {
+             printf("simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
+             }
+        }
+   if(dostype == 12)
+        {
+        printf("\nMS-DOS / PC-DOS version %d.%d\n",dos_major,dos_minor);
+        }
+   if(dostype == 13)
+        {
+        printf("\nWindows 95 OSR 2 or upper\n");
+        if(dos_major!=dos_sim_major || dos_minor!=dos_sim_minor)
+             {
+             printf("simulating DOS version %d.%d\n",dos_sim_major,dos_sim_minor);
+             }
+        }
 }
-
