@@ -26,6 +26,11 @@
               PC-DOS 3.30     3.30            0x00
               Windows 98 S.E. 7.10            0xFF
               Windows 2000    5.0             0xFF
+        0.02: Tested with the following DOSes obtaining:
+              DOS             DOS Version     DOS OEM Code
+              PTS-DOS 2000    6.22            0x66
+              RxDOS 7.1.5     7.0             0x5E
+
 
  --[ How to compile ]----------------------------------------------------
 
@@ -65,7 +70,7 @@
 #define SYSTEM "OWP"
 #define PROGRAM "VER"
 #define MAJOR_VERSION 0
-#define MINOR_VERSION_STRING "01"
+#define MINOR_VERSION_STRING "02"
 #define SUB_VERSION_STRING ""
 #define COPYRIGHT "2000 Open Windows Project"
 
@@ -134,10 +139,18 @@ main()
                        {
                        printf("MS-DOS %d.%d",dos_major,dos_minor);
                        }
-                       else
-                           {
-                           printf("Unknown DOS version %d.%d,OEM code %x",dos_major,dos_minor,dos_oem_code);
-                           printf("\nPlease send this info and the DOS name and version to iosglpgc@teleline.es");
-                           }
+                       else if(dos_oem_code==0x5E)
+                            {
+                            printf("RxDOS %d.%d",dos_major,dos_minor);
+                            }
+                            else if(dos_oem_code==0x66)
+                                 {
+                                 printf("PTS-DOS simulating DOS %d.%d",dos_major,dos_minor);
+                                 }
+                                 else
+                                     {
+                                     printf("Unknown DOS version %d.%d,OEM code %x",dos_major,dos_minor,dos_oem_code);
+                                     printf("\nPlease send this info and the DOS name and version to iosglpgc@teleline.es");
+                                     }
 }
 
